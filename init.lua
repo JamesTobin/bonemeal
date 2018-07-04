@@ -110,6 +110,28 @@ local function grow(pointed_thing)
     if n.name == "" then return end
     local stage = ""
 
+    -- grow moretrees
+    if minetest.get_modpath("moretrees") ~= nil then
+        if n.name == "moretrees:birch_sapling" then
+            moretrees.grow_birch(pos)
+        elseif n.name == "moretrees:spruce_sapling" then
+            moretrees.grow_spruce(pos)
+        elseif n.name == "moretrees:fir_sapling" then
+            moretrees.grow_fir(pos)
+        elseif n.name == "moretrees:junglesapling" then
+            moretrees.grow_jungletree(pos)
+        else
+            for i in ipairs(moretrees.treelist) do
+                local treename = moretrees.treelist[i][1]
+                local tree_model = treename.."_model"
+                if n.name == "moretrees:"..treename.."_sapling" then
+                    minetest.remove_node(pos)
+                    minetest.spawn_tree(pos, moretrees[tree_model])
+                end
+            end
+        end
+    end
+
     -- grow saplings into trees
     if n.name == "default:sapling" then
         default.grow_new_apple_tree(pos)
@@ -163,7 +185,7 @@ local function grow(pointed_thing)
         end
         if #sides > 0 then
             local dir = math.random(1, #sides)
-            minetest.swap_node(pos, {name="crops:pumpkin_plant_6_attached", param2=faces[dir].r})
+            minetest.swap_node(pos, {name="crops:pumpkin_plant_5_attached", param2=faces[dir].r})
             minetest.swap_node(sides[dir], {name="crops:pumpkin", param2=faces[dir].m})
         end
 
