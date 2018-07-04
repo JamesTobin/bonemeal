@@ -100,6 +100,7 @@ local crops = {
     ["farming:pineapple"]=8,
     ["farming:raspberry"]=4,
     ["farming:rhubarb"]=3,
+    ["farming:cocoa"]=4,
 }
 
 local function grow(pointed_thing)
