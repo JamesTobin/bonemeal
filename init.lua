@@ -1,62 +1,46 @@
 -- add bones to dirt
 minetest.override_item("default:dirt", {
-	drop = {
-		max_items = 1,
-		items = {
-			{
-				items = {'bone:bone', 'default:dirt'},
-				rarity = 7,
-			},
-			{
-				items = {'default:dirt'},
-			}
-		}
-	},
+    drop = {
+        max_items = 1,
+        items = {
+            {
+                items = {'bone:bone', 'default:dirt'},
+                rarity = 7,
+            },
+            {
+                items = {'default:dirt'},
+            }
+        }
+    },
 })
 
 -- add bones to dirt with grass
 minetest.override_item("default:dirt_with_grass", {
-	drop = {
-		max_items = 1,
-		items = {
-			{
-				items = {'bone:bone', 'default:dirt'},
-				rarity = 7,
-			},
-			{
-				items = {'default:dirt'},
-			}
-		}
-	},
+    drop = {
+        max_items = 1,
+        items = {
+            {
+                items = {'bone:bone', 'default:dirt'},
+                rarity = 7,
+            },
+            {
+                items = {'default:dirt'},
+            }
+        }
+    },
 })
 
 -- bone item
 minetest.register_craftitem("bone:bone", {
-	description = "Bone",
-	inventory_image = "bone_bone.png",
+    description = "Bone",
+    inventory_image = "bone_bone.png",
 })
 
 -- bonemeal recipe
 minetest.register_craft({
-	output = 'bone:bonemeal 5',
-	recipe = {{'bone:bone'}},
+    output = 'bone:bonemeal 5',
+    recipe = {{'bone:bone'}},
 })
-
--- apple tree definition
-local apple_tree = {
-	axiom = "FFFFFAFFBF",
-	rules_a = "[&&&FFFFF&&FFFF][&&&++++FFFFF&&FFFF][&&&----FFFFF&&FFFF]",
-	rules_b = "[&&&++FFFFF&&FFFF][&&&--FFFFF&&FFFF][&&&------FFFFF&&FFFF]",
-	trunk = "default:tree",
-	leaves = "default:leaves",
-	angle = 30,
-	iterations = 2,
-	random_level = 0,
-	trunk_type = "single",
-	thin_branches = true,
-	fruit_chance = 10,
-	fruit="default:apple"
-}
 
 local n
 local n2
@@ -65,111 +49,160 @@ local plant_tab = {}
 local rnd_max = 5
 
 minetest.after(0.5, function()
-	plant_tab[0] = "air"
-	plant_tab[1] = "default:grass_1"
-	plant_tab[2] = "default:grass_2"
-	plant_tab[3] = "default:grass_3"
-	plant_tab[4] = "default:grass_4"
-	plant_tab[5] = "default:grass_5"
+    plant_tab[0] = "air"
+    plant_tab[1] = "default:grass_1"
+    plant_tab[2] = "default:grass_2"
+    plant_tab[3] = "default:grass_3"
+    plant_tab[4] = "default:grass_4"
+    plant_tab[5] = "default:grass_5"
 
-	if minetest.get_modpath("flowers") ~= nil then
-		rnd_max = 11
-		plant_tab[6] = "flowers:dandelion_white"
-		plant_tab[7] = "flowers:dandelion_yellow"
-		plant_tab[8] = "flowers:geranium"
-		plant_tab[9] = "flowers:rose"
-		plant_tab[10] = "flowers:tulip"
-		plant_tab[11] = "flowers:viola"
-	end
+    if minetest.get_modpath("flowers") ~= nil then
+        rnd_max = 11
+        plant_tab[6] = "flowers:dandelion_white"
+        plant_tab[7] = "flowers:dandelion_yellow"
+        plant_tab[8] = "flowers:geranium"
+        plant_tab[9] = "flowers:rose"
+        plant_tab[10] = "flowers:tulip"
+        plant_tab[11] = "flowers:viola"
+    end
 
 end)
 
-local function duengen(pointed_thing)
+local faces = {  -- for growing pumpkins and melons
+    [1] = { x = -1, z = 0, r = 3, o = 1, m = 14 },
+    [2] = { x = 1, z = 0, r = 1, o = 3,  m = 16 },
+    [3] = { x = 0, z = -1, r = 2, o = 0, m = 5  },
+    [4] = { x = 0, z = 1, r = 0, o = 2,  m = 11 }
+}
 
-	pos = pointed_thing.under
-	n = minetest.get_node(pos)
-	if n.name == "" then return end
-	local stage = ""
+local crops = {
+    ["farming:wheat"]=8,
+    ["farming:cotton"]=8,
+    ["farming:pumpkin"]=8,
+    ["farming:melon"]=8,
+    ["farming:carrot"]=8,
+    ["farming:tomato"]=8,
+    ["farming:potato"]=4,
+    ["farming:coffee"]=5,
+    ["farming:barley"]=7,
+    ["farming:hemp"]=8,
+    ["farming:corn"]=8,
+    ["farming:beanpole"]=5,
+    ["farming:beetroot"]=5,
+    ["farming:blueberry"]=4,
+    ["farming:chili"]=8,
+    ["farming:cucumber"]=4,
+    ["farming:garlic"]=5,
+    ["farming:grapes"]=8,
+    ["farming:onion"]=5,
+    ["farming:pea"]=5,
+    ["farming:pepper"]=5,
+    ["farming:pineapple"]=8,
+    ["farming:raspberry"]=4,
+    ["farming:rhubarb"]=3,
+}
 
-	-- grow sapling into tree
-	if n.name == "default:sapling" then
-		minetest.set_node(pos, {name="air"})
-		if minetest.get_mapgen_params().mgname == "v6" then
-			default.grow_tree(pos, math.random(1, 4) == 1)
-		else
-			default.grow_new_apple_tree(pos)
-		end
+local function grow(pointed_thing)
 
-	-- grow wheat
-	elseif string.find(n.name, "farming:wheat_") ~= nil then
-		stage = string.sub(n.name, 15)
-		if stage == "3" then
-			minetest.set_node(pos, {name="farming:wheat"})
-		elseif math.random(1,5) < 3 then
-			minetest.set_node(pos, {name="farming:wheat"})
-		else
-			minetest.set_node(pos, {name="farming:wheat_"..math.random(2,3)})
-		end
+    pos = pointed_thing.under
+    n = minetest.get_node(pos)
+    if n.name == "" then return end
+    local stage = ""
 
-	-- grow cotton
-	elseif string.find(n.name, "farming:cotton_") ~= nil then
-		stage = tonumber(string.sub(n.name, 16))
-		if stage == 1 then
-			minetest.set_node(pos, {name="farming:cotton_"..math.random(stage, 2)})
-		else
-			minetest.set_node(pos, {name="farming:cotton"})
-		end
+    -- grow saplings into trees
+    if n.name == "default:sapling" then
+        default.grow_new_apple_tree(pos)
+    elseif n.name == "default:junglesapling" then
+        default.grow_new_jungle_tree(pos)
+    elseif n.name == "default:pine_sapling" then
+        if minetest.find_node_near(pos, 1, {"group:snowy"}) then
+            default.grow_new_snowy_pine_tree(pos)
+        else
+            default.grow_new_pine_tree(pos)
+        end
+    elseif n.name == "default:acacia_sapling" then
+        default.grow_new_acacia_tree(pos)
+    elseif n.name == "default:aspen_sapling" then
+        default.grow_new_aspen_tree(pos)
+    elseif n.name == "default:bush_sapling" then
+        default.grow_bush(pos)
+    elseif n.name == "default:acacia_bush_sapling" then
+        default.grow_acacia_bush(pos)
 
-	-- grow pumpkin
-	elseif string.find(n.name, "farming:pumpkin_") ~= nil then
-		stage = tonumber(string.sub(n.name, 17))
-		if stage == 1 then
-			minetest:set_node(pos, {name="farming:pumpkin_"..math.random(stage, 2)})
-		else
-			minetest:set_node(pos, {name="farming:pumpkin"})
-		end
+    -- grow crops
+    elseif crops[string.sub(n.name, 1, -3)] ~= nil then
+        stage = string.sub(n.name, -1)
+        if tostring(stage) ~= crops[string.sub(n.name, 1, -3)] then
+            minetest.set_node(pos, {name=string.sub(n.name, 1, -2)..crops[string.sub(n.name, 1, -3)]})
+        end
+    
+    -- grow melons
+    elseif string.sub(n.name, 1, -3) == "crops:melon_plant" then
+        local sides = {}
+        for face = 1, 4 do
+            local t = {x=pos.x+faces[face].x, y=pos.y, z=pos.z+faces[face].z}
+            if minetest.get_node(t).name == "air" then
+                table.insert(sides, t)
+            end
+        end
+        if #sides > 0 then
+            local dir = math.random(1, #sides)
+            minetest.swap_node(pos, {name="crops:melon_plant_5_attached", param2 = faces[dir].r})
+            minetest.swap_node(sides[dir], {name="crops:melon", param2=faces[dir].m})
+        end
+    
+    -- grow pumpkins
+    elseif string.sub(n.name, 1, -3) == "crops:pumpkin_plant" then
+        local sides = {}
+        for face = 1, 4 do
+            local t = {x=pos.x+faces[face].x, y=pos.y, z=pos.z+faces[face].z}
+            if minetest.get_node(t).name == "air" then
+                table.insert(sides, t)
+            end
+        end
+        if #sides > 0 then
+            local dir = math.random(1, #sides)
+            minetest.swap_node(pos, {name="crops:pumpkin_plant_6_attached", param2=faces[dir].r})
+            minetest.swap_node(sides[dir], {name="crops:pumpkin", param2=faces[dir].m})
+        end
 
-	-- grow grass and flowers
-	elseif n.name == "default:dirt_with_grass" then
-		for i = -2, 3, 1 do
-			for j = -3, 2, 1 do
-				pos = pointed_thing.above
-				pos = {x = pos.x + i, y = pos.y, z = pos.z + j}
-				n = minetest.get_node(pos)
-				n2 = minetest.get_node({x = pos.x, y = pos.y-1, z = pos.z})
+    -- grow grass and flowers
+    elseif n.name == "default:dirt_with_grass" then
+        for i = -2, 3, 1 do
+            for j = -3, 2, 1 do
+                pos = pointed_thing.above
+                pos = {x = pos.x + i, y = pos.y, z = pos.z + j}
+                n = minetest.get_node(pos)
+                n2 = minetest.get_node({x = pos.x, y = pos.y-1, z = pos.z})
 
-				if n.name ~= ""
-				 and n.name == "air"
-				 and n2.name == "default:dirt_with_grass" then
-					if math.random(0,5) > 3 then
-						minetest.set_node(pos,
-							{name=plant_tab[math.random(0, rnd_max)]})
-					else
-						minetest.set_node(pos,
-							{name=plant_tab[math.random(0, 5)]})
-					end
-				end
-			end
-		end
-	end
+                if n.name ~= "" and n.name == "air" and n2.name == "default:dirt_with_grass" then
+                    if math.random(0,5) > 3 then
+                        minetest.set_node(pos, {name=plant_tab[math.random(0, rnd_max)]})
+                    else
+                        minetest.set_node(pos, {name=plant_tab[math.random(0, 5)]})
+                    end
+                end
+            end
+        end
+    end
 end
 
 -- bonemeal item
 minetest.register_craftitem("bone:bonemeal", {
-	description = "Bone Meal",
-	inventory_image = "bone_bonemeal.png",
-	liquids_pointable = false,
-	stack_max = 99,
-	on_use = function(itemstack, user, pointed_thing)
-		if pointed_thing.type == "node" then
-			if not minetest.setting_getbool("creative_mode") then
-				local item = user:get_wielded_item()
-				item:take_item()
-				user:set_wielded_item(item)
-			end
-			duengen(pointed_thing)
-			itemstack:take_item()
-			return itemstack
-		end
-	end,
+    description = "Bone Meal",
+    inventory_image = "bone_bonemeal.png",
+    --liquids_pointable = false,
+    --stack_max = 99,
+    on_use = function(itemstack, user, pointed_thing)
+        if pointed_thing.type == "node" then
+            if not minetest.setting_getbool("creative_mode") then
+                local item = user:get_wielded_item()
+                item:take_item()
+                user:set_wielded_item(item)
+            end
+            grow(pointed_thing)
+            itemstack:take_item()
+            return itemstack
+        end
+    end,
 })
