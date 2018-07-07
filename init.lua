@@ -165,13 +165,13 @@ local function grow(pointed_thing)
         for face = 1, 4 do
             local t = {x=pos.x+faces[face].x, y=pos.y, z=pos.z+faces[face].z}
             if minetest.get_node(t).name == "air" then
-                table.insert(sides, t)
+                table.insert(sides, {face, t})
             end
         end
         if #sides > 0 then
             local dir = math.random(1, #sides)
-            minetest.swap_node(pos, {name="crops:melon_plant_5_attached", param2 = faces[dir].r})
-            minetest.swap_node(sides[dir], {name="crops:melon", param2=faces[dir].m})
+            minetest.swap_node(pos, {name="crops:melon_plant_5_attached", param2 = faces[sides[dir][1]].r})
+            minetest.swap_node(sides[dir][2], {name="crops:melon", param2=faces[sides[dir][1]].m})
         end
     
     -- grow pumpkins
@@ -180,13 +180,13 @@ local function grow(pointed_thing)
         for face = 1, 4 do
             local t = {x=pos.x+faces[face].x, y=pos.y, z=pos.z+faces[face].z}
             if minetest.get_node(t).name == "air" then
-                table.insert(sides, t)
+                table.insert(sides, {face, t})
             end
         end
         if #sides > 0 then
             local dir = math.random(1, #sides)
-            minetest.swap_node(pos, {name="crops:pumpkin_plant_5_attached", param2=faces[dir].r})
-            minetest.swap_node(sides[dir], {name="crops:pumpkin", param2=faces[dir].m})
+            minetest.swap_node(pos, {name="crops:pumpkin_plant_5_attached", param2=faces[sides[dir][1]].r})
+            minetest.swap_node(sides[dir][2], {name="crops:pumpkin", param2=faces[sides[dir][1]].m})
         end
 
     -- grow grass and flowers
